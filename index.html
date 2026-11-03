@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            text-align: center; 
+            padding: 20px; 
+            background: transparent; 
+        }
+        .container {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 30px 20px;
+            max-width: 400px;
+            margin: 0 auto;
+            background: #ffffff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        h2 { color: #333; margin-top: 0; font-size: 20px; font-weight: normal; }
+        .word-display { 
+            font-size: 36px; 
+            font-weight: bold; 
+            color: #1a73e8; 
+            margin: 15px 0;
+            letter-spacing: 1px;
+        }
+        button { 
+            padding: 14px 28px; 
+            font-size: 16px; 
+            font-weight: bold;
+            cursor: pointer; 
+            border-radius: 25px; 
+            border: none; 
+            background: #1a73e8; 
+            color: white; 
+            transition: background 0.2s, transform 0.1s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover { background: #1557b0; }
+        button:active { transform: scale(0.98); }
+        button:disabled { background: #cccccc; cursor: not-allowed; box-shadow: none; }
+        #result { 
+            margin-top: 25px; 
+            font-size: 18px; 
+            line-height: 1.5;
+            min-height: 50px;
+        }
+        .listening { color: #f2994a; font-weight: bold; animation: blink 1.5s infinite; }
+        .correct { color: #27ae60; font-weight: bold; }
+        .incorrect { color: #eb5757; font-weight: bold; }
+        @keyframes blink {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Now you say this word:</h2>
+        <div class="word-display">chip</div>
+        <button id="start-btn">🎙️ Click to Speak</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const targetWord = "chip"; 
+        const startBtn = document.getElementById('start-btn');
+        const resultDiv = document.getElementById('result');
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (!SpeechRecognition) {
+            resultDiv.innerHTML = "<span class='incorrect'>Your browser does not support speech recognition. Please use Google Chrome on a computer or Android device.</span>";
+            startBtn.disabled = true;
+        } else {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            startBtn.addEventListener('click', () => {
+                resultDiv.innerHTML = "<span class='listening'>Listening... Speak now!</span>";
+                startBtn.disabled = true;
+                recognition.start();
+            });
+
+            recognition.onresult = (event) => {
+                const spokenWord = event.results.transcript.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g,"").trim();
+                
+                if (spokenWord === targetWord) {
+                    resultDiv.innerHTML = `<span class="correct">🎉 Excellent! Perfect pronunciation.</span>`;
+                } else {
+                    resultDiv.innerHTML = `<span class="incorrect">❌ Try again!</span><br><small style="color:#666">You said: "${spokenWord}"</small>`;
+                }
+            };
+
+            recognition.onspeechend = () => {
+                recognition.stop();
+                startBtn.disabled = false;
+            };
+
+            recognition.onerror = (event) => {
+                startBtn.disabled = false;
+                if (event.error === 'not-allowed') {
+                    resultDiv.innerHTML = "<span class='incorrect'>Microphone access denied. Please use the 'Open in New Tab' link or check your browser settings.</span>";
+                } else {
+                    resultDiv.innerHTML = "<span class='incorrect'>Could not hear you clearly. Please try again.</span>";
+                }
+            };
+        }
+    </script>
+</body>
+</html>
